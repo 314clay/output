@@ -1,0 +1,11 @@
+<div class="item-card" id="item-{{ item.id }}" data-format="json">
+  <div class="item-header">
+    {% if item.title %}<h3 class="item-title">{{ item.title }}</h3>{% endif %}
+    <div class="item-meta">
+      <span class="item-badge">json</span>
+      <span class="item-timestamp" data-ts="{{ item.created_at }}">{{ item.age }}</span>
+    </div>
+  </div>
+  <div class="item-content output-json" data-json="{{ item.json_str }}">
+  </div>
+</div>

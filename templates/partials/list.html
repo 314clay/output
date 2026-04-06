@@ -1,0 +1,44 @@
+<div class="item-card" id="item-{{ item.id }}" data-format="list">
+  <div class="item-header">
+    {% if item.title %}<h3 class="item-title">{{ item.title }}</h3>{% endif %}
+    <div class="item-meta">
+      <span class="item-badge">list</span>
+      <span class="list-count">{{ item.content['items'] | length }} items</span>
+      <span class="item-timestamp" data-ts="{{ item.created_at }}">{{ item.age }}</span>
+    </div>
+  </div>
+  <div class="item-content output-list">
+    {% if item.content.description %}<p class="list-description">{{ item.content.description }}</p>{% endif %}
+    <div class="list-items">
+      {% for entry in item.content['items'] %}
+      <details class="list-entry{% if entry.status %} list-status-{{ entry.status }}{% endif %}">
+        <summary class="list-entry-summary">
+          <span class="list-entry-icon">
+            {% if entry.status == 'active' %}
+              <span class="status-dot status-active"></span>
+            {% elif entry.status == 'archived' %}
+              <span class="status-dot status-archived"></span>
+            {% elif entry.status == 'done' %}
+              <span class="status-dot status-done"></span>
+            {% else %}
+              <span class="list-chevron"></span>
+            {% endif %}
+          </span>
+          <span class="list-entry-title">{{ entry.title }}</span>
+          {% if entry.badge %}<span class="list-entry-badge">{{ entry.badge }}</span>{% endif %}
+          {% if entry.date %}<span class="list-entry-date">{{ entry.date }}</span>{% endif %}
+        </summary>
+        {% if entry.detail %}
+        <div class="list-entry-detail">{{ entry.detail }}</div>
+        {% endif %}
+        {% if entry.tags %}
+        <div class="list-entry-tags">
+          {% for tag in entry.tags %}<span class="list-tag">{{ tag }}</span>{% endfor %}
+        </div>
+        {% endif %}
+      </details>
+      {% endfor %}
+    </div>
+    {% if item.content.footer %}<p class="list-footer">{{ item.content.footer }}</p>{% endif %}
+  </div>
+</div>

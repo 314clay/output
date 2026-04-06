@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ channel.name }} — Output</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui-slim.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css">
+</head>
+<body data-channel="{{ channel.id }}" data-dashboard="true">
+  <div class="channel-header">
+    <a href="/" class="back-link">&larr; Channels</a>
+    <h1>{{ channel.name }}</h1>
+    {% if channel.description %}<p class="channel-subtitle">{{ channel.description }}</p>{% endif %}
+  </div>
+
+  <div class="dashboard-grid" id="dashboard-grid"
+       style="grid-template-columns: repeat({{ tmpl.columns }}, 1fr); grid-auto-rows: {{ tmpl.row_height }}; gap: {{ tmpl.gap }};">
+    {% for name, slot in tmpl.slots.items() %}
+    <div class="dashboard-slot" id="slot-{{ name }}"
+         style="grid-column: {{ slot.col }} / span {{ slot.width }}; grid-row: {{ slot.row }} / span {{ slot.height }};">
+      <div class="slot-label">{{ slot.label or name }}</div>
+      <div class="slot-content" id="slot-content-{{ name }}">
+        {% if slot_items.get(name) %}
+          {{ render_item(slot_items[name]) }}
+        {% else %}
+          <div class="slot-empty">--</div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <script src="/static/output.js"></script>
+</body>
+</html>

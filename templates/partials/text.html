@@ -1,0 +1,16 @@
+<div class="item-card" id="item-{{ item.id }}" data-format="text">
+  <div class="item-header">
+    {% if item.title %}<h3 class="item-title">{{ item.title }}</h3>{% endif %}
+    <div class="item-meta">
+      <span class="item-badge">text</span>
+      <span class="item-timestamp" data-ts="{{ item.created_at }}">{{ item.age }}</span>
+    </div>
+  </div>
+  <div class="item-content output-text">
+    {% if item.content.render == 'markdown' %}
+      <div class="markdown-body">{{ item.rendered_html }}</div>
+    {% else %}
+      <pre>{{ item.content.body }}</pre>
+    {% endif %}
+  </div>
+</div>

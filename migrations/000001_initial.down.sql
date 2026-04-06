@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS file_uploads;
+DROP TABLE IF EXISTS items;
+DROP TABLE IF EXISTS channels;

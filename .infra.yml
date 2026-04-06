@@ -1,0 +1,9 @@
+project:
+  name: output
+  port: "3051"
+  db_name: output
+  health_endpoint: /api/state
+  health_url: https://output.claypersonalprojects.cc/api/state
+  test_command: python test_output.py
+  deploy_path: ~/output
+  runtime: python

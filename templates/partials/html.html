@@ -1,0 +1,16 @@
+<div class="item-card" id="item-{{ item.id }}" data-format="html">
+  <div class="item-header">
+    {% if item.title %}<h3 class="item-title">{{ item.title }}</h3>{% endif %}
+    <div class="item-meta">
+      <span class="item-badge">html</span>
+      <span class="item-timestamp" data-ts="{{ item.created_at }}">{{ item.age }}</span>
+    </div>
+  </div>
+  <div class="item-content output-html">
+    {% if item.content.sandbox is not defined or item.content.sandbox %}
+      <iframe srcdoc="{{ item.content.body | e }}" sandbox="allow-scripts" style="width:100%;min-height:200px;border:none;border-radius:12px;"></iframe>
+    {% else %}
+      {{ item.content.body }}
+    {% endif %}
+  </div>
+</div>

@@ -1,0 +1,19 @@
+<div class="item-card" id="item-{{ item.id }}" data-format="image">
+  <div class="item-header">
+    {% if item.title %}<h3 class="item-title">{{ item.title }}</h3>{% endif %}
+    <div class="item-meta">
+      <span class="item-badge">image</span>
+      <span class="item-timestamp" data-ts="{{ item.created_at }}">{{ item.age }}</span>
+    </div>
+  </div>
+  <div class="item-content output-image">
+    <figure>
+      {% if item.content.upload_id %}
+        <img src="/api/file/{{ item.content.upload_id }}" alt="{{ item.content.alt or '' }}" loading="lazy">
+      {% else %}
+        <img src="{{ item.content.url }}" alt="{{ item.content.alt or '' }}" loading="lazy">
+      {% endif %}
+      {% if item.content.caption %}<figcaption>{{ item.content.caption }}</figcaption>{% endif %}
+    </figure>
+  </div>
+</div>

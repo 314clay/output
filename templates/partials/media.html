@@ -1,0 +1,23 @@
+<div class="item-card" id="item-{{ item.id }}" data-format="media">
+  <div class="item-header">
+    {% if item.title %}<h3 class="item-title">{{ item.title }}</h3>{% endif %}
+    <div class="item-meta">
+      <span class="item-badge">media</span>
+      <span class="item-timestamp" data-ts="{{ item.created_at }}">{{ item.age }}</span>
+    </div>
+  </div>
+  <div class="item-content output-media">
+    {% set media_type = item.content.type | default('video') %}
+    {% set src = '/api/file/' ~ item.content.upload_id if item.content.upload_id else item.content.url %}
+    {% if media_type == 'video' %}
+      <video controls preload="metadata" {% if item.content.poster %}poster="{{ item.content.poster }}"{% endif %}>
+        <source src="{{ src }}" {% if item.content.mime %}type="{{ item.content.mime }}"{% endif %}>
+      </video>
+    {% elif media_type == 'audio' %}
+      <audio controls preload="metadata">
+        <source src="{{ src }}" {% if item.content.mime %}type="{{ item.content.mime }}"{% endif %}>
+      </audio>
+    {% endif %}
+    {% if item.content.caption %}<p class="media-caption">{{ item.content.caption }}</p>{% endif %}
+  </div>
+</div>

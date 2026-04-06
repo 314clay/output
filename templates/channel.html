@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ channel.name }} — Output</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui-slim.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css">
+</head>
+<body data-channel="{{ channel.id }}">
+  <div class="channel-header">
+    <a href="/" class="back-link">&larr; Channels</a>
+    <h1>{{ channel.name }}</h1>
+    {% if channel.description %}<p class="channel-subtitle">{{ channel.description }}</p>{% endif %}
+    <p class="channel-meta-line">{{ item_count }} item{{ 's' if item_count != 1 }}</p>
+  </div>
+
+  <div class="item-list" id="item-list">
+    {% for item in items %}
+      {{ render_item(item) }}
+    {% endfor %}
+    {% if not items %}
+      <div class="channel-empty" id="empty-msg">Waiting for output...</div>
+    {% endif %}
+  </div>
+
+  <script src="/static/output.js"></script>
+</body>
+</html>

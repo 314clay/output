@@ -1,0 +1,2 @@
+DROP INDEX IF EXISTS idx_items_slot;
+ALTER TABLE items DROP COLUMN IF EXISTS slot_name;

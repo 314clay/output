@@ -1,0 +1,18 @@
+<div class="item-card" id="item-{{ item.id }}" data-format="table">
+  <div class="item-header">
+    {% if item.title %}<h3 class="item-title">{{ item.title }}</h3>{% endif %}
+    <div class="item-meta">
+      <span class="item-badge">table</span>
+      <span class="item-timestamp" data-ts="{{ item.created_at }}">{{ item.age }}</span>
+    </div>
+  </div>
+  <div class="item-content output-table">
+    {% if item.content.caption %}<p class="table-caption">{{ item.content.caption }}</p>{% endif %}
+    <div class="table-scroll">
+      <table>
+        <thead><tr>{% for col in item.content.columns %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+        <tbody>{% for row in item.content.rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+      </table>
+    </div>
+  </div>
+</div>

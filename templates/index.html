@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Output</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="channel-header" style="text-align:center; padding: 2rem 2rem 0;">
+    <h1>Output Channels</h1>
+    <p class="channel-subtitle">{{ total }} active</p>
+  </div>
+  <div class="channel-list">
+    {% if channels %}
+      {% for c in channels %}
+      <a class="channel-card" href="/{{ c.id }}">
+        <h3>{{ c.name }}</h3>
+        {% if c.description %}<p class="channel-desc">{{ c.description }}</p>{% endif %}
+        <div class="channel-meta">
+          <span class="item-badge">{{ c.item_count }} item{{ 's' if c.item_count != 1 }}</span>
+          <span class="channel-age">{{ c.age }}</span>
+        </div>
+      </a>
+      {% endfor %}
+    {% else %}
+      <div class="channel-empty">No active channels</div>
+    {% endif %}
+  </div>
+</body>
+</html>
