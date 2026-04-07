@@ -246,6 +246,7 @@ async def get_claude_sessions(
                    (SELECT COUNT(*) FROM claude_sessions.messages m WHERE m.session_id = s.session_id) AS msg_count
             FROM claude_sessions.sessions s
             LEFT JOIN claude_sessions.first_messages fm ON fm.session_id = s.session_id
+            WHERE EXISTS (SELECT 1 FROM claude_sessions.messages m WHERE m.session_id = s.session_id)
             ORDER BY s.start_time DESC
             LIMIT $1 OFFSET $2
         """, limit, offset)
