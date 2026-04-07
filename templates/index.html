@@ -11,6 +11,16 @@
     <h1>Output Channels</h1>
     <p class="channel-subtitle">{{ total }} active</p>
   </div>
+  <div class="channel-list" style="margin-bottom: 0;">
+    <a class="channel-card" href="/claude" style="border-left: 3px solid var(--accent-blue);">
+      <h3>Claude Messages</h3>
+      <p class="channel-desc">Live Claude Code session viewer</p>
+      <div class="channel-meta">
+        <span class="item-badge">sessions</span>
+      </div>
+    </a>
+  </div>
+
   <div class="channel-list">
     {% if channels %}
       {% for c in channels %}

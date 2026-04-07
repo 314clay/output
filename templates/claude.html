@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Messages — Output</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="claude-page">
+  <div class="claude-layout">
+    <!-- Sidebar -->
+    <aside class="claude-sidebar">
+      <div class="claude-sidebar-header">
+        <a href="/" class="back-link">&larr;</a>
+        <h2>Sessions</h2>
+      </div>
+      <div class="claude-search">
+        <input type="text" id="session-search" placeholder="Search messages..." autocomplete="off">
+      </div>
+      <div class="claude-session-list" id="session-list">
+        {% for s in sessions %}
+        <div class="claude-session-item" data-session-id="{{ s.session_id }}">
+          <div class="claude-session-cwd">{{ s.cwd.split('/')[-2:] | join('/') if s.cwd else 'unknown' }}</div>
+          <div class="claude-session-preview">{{ (s.summary or s.first_message or '')[0:80] }}{% if (s.summary or s.first_message or '') | length > 80 %}...{% endif %}</div>
+          <div class="claude-session-meta">
+            <span class="claude-session-count">{{ s.msg_count }} msg{{ 's' if s.msg_count != 1 }}</span>
+            <span class="claude-session-time">{{ relative_time(s.start_time) if s.start_time else '' }}</span>
+          </div>
+        </div>
+        {% endfor %}
+        <div class="claude-load-more" id="load-more">Load more</div>
+      </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="claude-main" id="claude-main">
+      <div class="claude-empty-state" id="empty-state">
+        <p>Select a session to view messages</p>
+        <p class="text-muted">{{ sessions | length }} sessions loaded</p>
+      </div>
+      <div class="claude-conversation" id="conversation" style="display:none;">
+        <div class="claude-conv-header" id="conv-header"></div>
+        <div class="claude-messages" id="messages"></div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/static/claude.js"></script>
+</body>
+</html>

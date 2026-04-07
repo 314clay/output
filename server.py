@@ -470,6 +470,103 @@ async def listen(channel_id: str, request: Request, replay: bool = False):
 
 # --- Routes: Pages ---
 
+# --- Routes: Claude Messages ---
+
+@app.get("/api/claude/sessions")
+async def claude_sessions_api(
+    limit: int = 50, offset: int = 0, search: str | None = None,
+):
+    sessions = await db.get_claude_sessions(limit=limit, offset=offset, search=search)
+    return {
+        "sessions": [
+            {
+                "session_id": s["session_id"],
+                "cwd": s["cwd"],
+                "start_time": s["start_time"].isoformat() if s["start_time"] else None,
+                "end_time": s["end_time"].isoformat() if s["end_time"] else None,
+                "status": s["status"],
+                "parent_session_id": s["parent_session_id"],
+                "first_message": s["first_message"],
+                "summary": s["summary"],
+                "msg_count": s["msg_count"],
+            }
+            for s in sessions
+        ],
+        "count": len(sessions),
+        "offset": offset,
+    }
+
+
+@app.get("/api/claude/sessions/{session_id}/messages")
+async def claude_session_messages_api(session_id: str):
+    messages = await db.get_claude_session_messages(session_id)
+    session = await db.get_claude_session(session_id)
+    return {
+        "session": {
+            "session_id": session["session_id"],
+            "cwd": session["cwd"],
+            "start_time": session["start_time"].isoformat() if session["start_time"] else None,
+            "status": session["status"],
+            "summary": session["summary"],
+        } if session else None,
+        "messages": [
+            {
+                "id": m["id"],
+                "role": m["role"],
+                "content": m["content"],
+                "sequence_num": m["sequence_num"],
+                "timestamp": m["timestamp"].isoformat() if m["timestamp"] else None,
+                "model": m["model"],
+                "input_tokens": m["input_tokens"],
+                "output_tokens": m["output_tokens"],
+            }
+            for m in messages
+        ],
+        "count": len(messages),
+    }
+
+
+@app.get("/api/claude/live")
+async def claude_live(request: Request):
+    """SSE endpoint that polls for new claude messages."""
+    latest_id = await db.get_latest_claude_message_id() or 0
+
+    async def event_generator():
+        nonlocal latest_id
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+                new_msgs = await db.get_new_claude_messages(latest_id)
+                for msg in new_msgs:
+                    data = {
+                        "id": msg["id"],
+                        "session_id": msg["session_id"],
+                        "role": msg["role"],
+                        "content": msg["content"][:500],
+                        "timestamp": msg["timestamp"].isoformat() if msg["timestamp"] else None,
+                        "model": msg["model"],
+                    }
+                    yield f"event: new_message\ndata: {json.dumps(data, default=str)}\n\n"
+                    latest_id = max(latest_id, msg["id"])
+                await asyncio.sleep(3)
+                yield f"event: heartbeat\ndata: {json.dumps({'time': datetime.now(timezone.utc).isoformat()})}\n\n"
+        except asyncio.CancelledError:
+            pass
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
+# --- Routes: Pages ---
+
 @app.get("/")
 async def index():
     rows = await db.list_channels(active_only=True)
@@ -479,6 +576,14 @@ async def index():
     ]
     tmpl = jinja_env.get_template("index.html")
     html = tmpl.render(channels=channels, total=len(channels))
+    return HTMLResponse(html)
+
+
+@app.get("/claude")
+async def claude_page():
+    sessions = await db.get_claude_sessions(limit=50)
+    tmpl = jinja_env.get_template("claude.html")
+    html = tmpl.render(sessions=sessions, relative_time=relative_time)
     return HTMLResponse(html)
 
 

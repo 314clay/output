@@ -6,6 +6,7 @@ services:
     network_mode: host
     environment:
       - DATABASE_URL=postgresql://postgres@127.0.0.1:5433/output
+      - CS_DATABASE_URL=postgresql://clayarnold@127.0.0.1:5432/connectingservices
       - UPLOAD_DIR=/data/uploads
     volumes:
       - output-uploads:/data/uploads

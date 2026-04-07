@@ -9,17 +9,26 @@ DATABASE_URL = os.environ.get(
     "postgresql://clayarnold@localhost:5432/output",
 )
 
+CS_DATABASE_URL = os.environ.get(
+    "CS_DATABASE_URL",
+    "postgresql://clayarnold@localhost:5432/connectingservices",
+)
+
 pool: asyncpg.Pool | None = None
+cs_pool: asyncpg.Pool | None = None
 
 
 async def init_pool():
-    global pool
+    global pool, cs_pool
     pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
+    cs_pool = await asyncpg.create_pool(CS_DATABASE_URL, min_size=1, max_size=5)
 
 
 async def close_pool():
     if pool:
         await pool.close()
+    if cs_pool:
+        await cs_pool.close()
 
 
 async def create_channel(
@@ -199,3 +208,78 @@ async def get_file_upload(upload_id: int) -> dict | None:
         "SELECT * FROM file_uploads WHERE id = $1", upload_id,
     )
     return dict(row) if row else None
+
+
+# --- Claude Sessions (read-only from connectingservices DB) ---
+
+
+async def get_claude_sessions(
+    limit: int = 50, offset: int = 0, search: str | None = None,
+) -> list[dict]:
+    if search:
+        rows = await cs_pool.fetch("""
+            SELECT s.session_id, s.cwd, s.start_time, s.end_time, s.status,
+                   s.parent_session_id,
+                   fm.content AS first_message,
+                   fm.summary,
+                   (SELECT COUNT(*) FROM claude_sessions.messages m WHERE m.session_id = s.session_id) AS msg_count
+            FROM claude_sessions.sessions s
+            LEFT JOIN claude_sessions.first_messages fm ON fm.session_id = s.session_id
+            WHERE EXISTS (
+                SELECT 1 FROM claude_sessions.messages m
+                WHERE m.session_id = s.session_id AND m.content ILIKE $3
+            )
+            ORDER BY s.start_time DESC
+            LIMIT $1 OFFSET $2
+        """, limit, offset, f"%{search}%")
+    else:
+        rows = await cs_pool.fetch("""
+            SELECT s.session_id, s.cwd, s.start_time, s.end_time, s.status,
+                   s.parent_session_id,
+                   fm.content AS first_message,
+                   fm.summary,
+                   (SELECT COUNT(*) FROM claude_sessions.messages m WHERE m.session_id = s.session_id) AS msg_count
+            FROM claude_sessions.sessions s
+            LEFT JOIN claude_sessions.first_messages fm ON fm.session_id = s.session_id
+            ORDER BY s.start_time DESC
+            LIMIT $1 OFFSET $2
+        """, limit, offset)
+    return [dict(r) for r in rows]
+
+
+async def get_claude_session_messages(session_id: str) -> list[dict]:
+    rows = await cs_pool.fetch("""
+        SELECT id, session_id, role, content, sequence_num, timestamp, model,
+               input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens
+        FROM claude_sessions.messages
+        WHERE session_id = $1
+        ORDER BY sequence_num ASC
+    """, session_id)
+    return [dict(r) for r in rows]
+
+
+async def get_claude_session(session_id: str) -> dict | None:
+    row = await cs_pool.fetchrow("""
+        SELECT s.*, fm.content AS first_message, fm.summary
+        FROM claude_sessions.sessions s
+        LEFT JOIN claude_sessions.first_messages fm ON fm.session_id = s.session_id
+        WHERE s.session_id = $1
+    """, session_id)
+    return dict(row) if row else None
+
+
+async def get_latest_claude_message_id() -> int | None:
+    return await cs_pool.fetchval(
+        "SELECT MAX(id) FROM claude_sessions.messages"
+    )
+
+
+async def get_new_claude_messages(since_id: int, limit: int = 50) -> list[dict]:
+    rows = await cs_pool.fetch("""
+        SELECT m.id, m.session_id, m.role, m.content, m.sequence_num, m.timestamp, m.model
+        FROM claude_sessions.messages m
+        WHERE m.id > $1
+        ORDER BY m.id ASC
+        LIMIT $2
+    """, since_id, limit)
+    return [dict(r) for r in rows]
