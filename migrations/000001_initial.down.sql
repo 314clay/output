@@ -1,3 +1,2 @@
-DROP TABLE IF EXISTS file_uploads;
-DROP TABLE IF EXISTS items;
-DROP TABLE IF EXISTS channels;
+-- WARNING: This drops all tables. Use with caution.
+-- Add DROP TABLE statements here
