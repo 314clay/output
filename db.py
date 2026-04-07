@@ -21,7 +21,10 @@ cs_pool: asyncpg.Pool | None = None
 async def init_pool():
     global pool, cs_pool
     pool = await asyncpg.create_pool(DATABASE_URL, min_size=2, max_size=10)
-    cs_pool = await asyncpg.create_pool(CS_DATABASE_URL, min_size=1, max_size=5)
+    try:
+        cs_pool = await asyncpg.create_pool(CS_DATABASE_URL, min_size=1, max_size=5)
+    except Exception:
+        cs_pool = None
 
 
 async def close_pool():
@@ -216,6 +219,8 @@ async def get_file_upload(upload_id: int) -> dict | None:
 async def get_claude_sessions(
     limit: int = 50, offset: int = 0, search: str | None = None,
 ) -> list[dict]:
+    if not cs_pool:
+        return []
     if search:
         rows = await cs_pool.fetch("""
             SELECT s.session_id, s.cwd, s.start_time, s.end_time, s.status,
@@ -248,6 +253,8 @@ async def get_claude_sessions(
 
 
 async def get_claude_session_messages(session_id: str) -> list[dict]:
+    if not cs_pool:
+        return []
     rows = await cs_pool.fetch("""
         SELECT id, session_id, role, content, sequence_num, timestamp, model,
                input_tokens, output_tokens, cache_read_tokens, cache_creation_tokens
@@ -259,6 +266,8 @@ async def get_claude_session_messages(session_id: str) -> list[dict]:
 
 
 async def get_claude_session(session_id: str) -> dict | None:
+    if not cs_pool:
+        return None
     row = await cs_pool.fetchrow("""
         SELECT s.*, fm.content AS first_message, fm.summary
         FROM claude_sessions.sessions s
@@ -269,12 +278,16 @@ async def get_claude_session(session_id: str) -> dict | None:
 
 
 async def get_latest_claude_message_id() -> int | None:
+    if not cs_pool:
+        return None
     return await cs_pool.fetchval(
         "SELECT MAX(id) FROM claude_sessions.messages"
     )
 
 
 async def get_new_claude_messages(since_id: int, limit: int = 50) -> list[dict]:
+    if not cs_pool:
+        return []
     rows = await cs_pool.fetch("""
         SELECT m.id, m.session_id, m.role, m.content, m.sequence_num, m.timestamp, m.model
         FROM claude_sessions.messages m
