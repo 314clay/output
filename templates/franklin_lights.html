@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Franklin Lights</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --dim: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --amber: #d29922; --red: #f85149; --blue: #58a6ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', monospace;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+    padding: 2rem; max-width: 760px; margin: 0 auto;
+  }
+  h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+  h1 span { color: var(--dim); font-weight: normal; font-size: 0.85rem; }
+  .subtitle { color: var(--dim); font-size: 0.8rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; padding: 1.25rem; margin-bottom: 1rem;
+  }
+  .card h2 { font-size: 0.85rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+
+  .state-card {
+    display: flex; align-items: center; gap: 1.25rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+  .state-card.GREEN { border-color: var(--green); box-shadow: 0 0 24px -8px var(--green); }
+  .state-card.AMBER { border-color: var(--amber); box-shadow: 0 0 24px -8px var(--amber); }
+  .state-card.RED   { border-color: var(--red);   box-shadow: 0 0 24px -8px var(--red);   }
+  .state-card.BLUE  { border-color: var(--blue);  box-shadow: 0 0 24px -8px var(--blue);  }
+  .state-card.UNKNOWN { border-color: var(--border); }
+
+  .state-orb {
+    width: 56px; height: 56px; border-radius: 50%; flex-shrink: 0;
+    background: var(--border);
+    box-shadow: inset 0 0 12px rgba(0,0,0,0.4), 0 0 24px -4px currentColor;
+  }
+  .state-card.GREEN .state-orb { background: var(--green); color: var(--green); }
+  .state-card.AMBER .state-orb { background: var(--amber); color: var(--amber); }
+  .state-card.RED   .state-orb { background: var(--red);   color: var(--red);   }
+  .state-card.BLUE  .state-orb { background: var(--blue);  color: var(--blue);  }
+
+  .state-text { flex: 1; }
+  .state-label { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.04em; }
+  .state-since { color: var(--dim); font-size: 0.8rem; margin-top: 0.25rem; }
+
+  .reasons-empty { color: var(--dim); font-size: 0.85rem; font-style: italic; }
+  .reason-section { margin-bottom: 0.75rem; }
+  .reason-section:last-child { margin-bottom: 0; }
+  .reason-label { color: var(--dim); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.35rem; }
+  .reason-list { list-style: none; }
+  .reason-list li {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0.35rem 0.6rem; margin-bottom: 0.25rem;
+    font-size: 0.8rem; color: var(--text); word-break: break-all;
+  }
+  .reason-list li.kuma { border-left: 3px solid var(--red); }
+  .reason-list li.cluster { border-left: 3px solid var(--amber); }
+  .reason-list li.meta { border-left: 3px solid var(--blue); }
+
+  .brightness-row {
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .brightness-row input[type="range"] {
+    flex: 1; -webkit-appearance: none; appearance: none;
+    height: 6px; background: var(--border); border-radius: 3px; outline: none;
+  }
+  .brightness-row input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none;
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); cursor: pointer; border: none;
+  }
+  .brightness-row input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: var(--accent); cursor: pointer; border: none;
+  }
+  .brightness-value {
+    min-width: 3.5rem; text-align: right; font-variant-numeric: tabular-nums;
+    color: var(--text); font-size: 0.9rem;
+  }
+
+  .preset-row { display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap; }
+  .preset-btn {
+    background: var(--bg); color: var(--text);
+    border: 1px solid var(--border); padding: 0.35rem 0.75rem;
+    border-radius: 4px; cursor: pointer; font-family: inherit;
+    font-size: 0.8rem;
+  }
+  .preset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .actions-row { display: flex; gap: 0.5rem; }
+  button.primary {
+    background: var(--accent); color: var(--bg); border: none;
+    padding: 0.4rem 1rem; border-radius: 4px; cursor: pointer;
+    font-family: inherit; font-size: 0.85rem; font-weight: 600;
+  }
+  button.primary:hover { opacity: 0.9; }
+
+  .meta-line { color: var(--dim); font-size: 0.75rem; margin-top: 0.75rem; }
+  .scaled-swatch {
+    display: inline-block; width: 1rem; height: 1rem;
+    border: 1px solid var(--border); border-radius: 3px;
+    vertical-align: middle; margin-right: 0.35rem;
+  }
+
+  .error-banner {
+    background: rgba(248, 81, 73, 0.1); border: 1px solid var(--red);
+    color: var(--red); padding: 0.6rem 1rem; border-radius: 4px;
+    margin-bottom: 1rem; font-size: 0.85rem; display: none;
+  }
+  .error-banner.show { display: block; }
+</style>
+</head>
+<body>
+
+<h1>Franklin Lights <span>/franklin-lights</span></h1>
+<div class="subtitle">RGB status monitor for the home-server. Daemon: <code>100.112.120.2:6743</code></div>
+
+<div id="error-banner" class="error-banner"></div>
+
+<div class="card state-card UNKNOWN" id="state-card">
+  <div class="state-orb"></div>
+  <div class="state-text">
+    <div class="state-label" id="state-label">…</div>
+    <div class="state-since" id="state-since">loading</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Reasons</h2>
+  <div id="reasons">
+    <div class="reasons-empty">…</div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Brightness</h2>
+  <div class="brightness-row">
+    <input type="range" min="0" max="100" value="100" id="brightness-slider">
+    <span class="brightness-value" id="brightness-value">—</span>
+  </div>
+  <div class="preset-row">
+    <button class="preset-btn" data-value="100">Full · 100</button>
+    <button class="preset-btn" data-value="60">Day · 60</button>
+    <button class="preset-btn" data-value="25">Evening · 25</button>
+    <button class="preset-btn" data-value="8">Night · 8</button>
+    <button class="preset-btn" data-value="0">Off · 0</button>
+  </div>
+  <div class="meta-line">
+    <span class="scaled-swatch" id="scaled-swatch"></span>
+    Currently pushing <code id="scaled-color">000000</code>
+    (base <code id="base-color">000000</code>)
+  </div>
+</div>
+
+<div class="card">
+  <h2>Actions</h2>
+  <div class="actions-row">
+    <button class="primary" id="force-push-btn">Force re-push</button>
+  </div>
+</div>
+
+<script>
+const STATES = ["GREEN", "AMBER", "RED", "BLUE"];
+let lastBrightness = null;
+let suppressNextPoll = false;
+
+const $ = (id) => document.getElementById(id);
+
+function showError(msg) {
+  const b = $("error-banner");
+  b.textContent = msg;
+  b.classList.add("show");
+}
+function clearError() {
+  $("error-banner").classList.remove("show");
+}
+
+function formatSince(seconds) {
+  if (seconds == null) return "no transitions yet";
+  if (seconds < 60) return `${seconds}s in this state`;
+  if (seconds < 3600) return `${Math.floor(seconds/60)}m in this state`;
+  if (seconds < 86400) return `${Math.floor(seconds/3600)}h in this state`;
+  return `${Math.floor(seconds/86400)}d in this state`;
+}
+
+function render(data) {
+  if (data.error) {
+    showError(data.error);
+  } else {
+    clearError();
+  }
+
+  const card = $("state-card");
+  STATES.forEach((s) => card.classList.remove(s));
+  card.classList.remove("UNKNOWN");
+  if (data.state) card.classList.add(data.state);
+  else card.classList.add("UNKNOWN");
+
+  $("state-label").textContent = data.state || "UNKNOWN";
+  $("state-since").textContent = formatSince(data.since_seconds);
+
+  // Reasons
+  const r = $("reasons");
+  r.innerHTML = "";
+  let any = false;
+  if (data.meta_error) {
+    any = true;
+    const sec = document.createElement("div");
+    sec.className = "reason-section";
+    sec.innerHTML = `<div class="reason-label">Meta-failure (BLUE)</div>
+      <ul class="reason-list"><li class="meta">${escapeHtml(data.meta_error)}</li></ul>`;
+    r.appendChild(sec);
+  }
+  if (data.kuma_down && data.kuma_down.length) {
+    any = true;
+    const sec = document.createElement("div");
+    sec.className = "reason-section";
+    sec.innerHTML = `<div class="reason-label">Kuma DOWN — drives RED</div>
+      <ul class="reason-list">${data.kuma_down.map(x => `<li class="kuma">${escapeHtml(x)}</li>`).join("")}</ul>`;
+    r.appendChild(sec);
+  }
+  if (data.cluster_issues && data.cluster_issues.length) {
+    any = true;
+    const sec = document.createElement("div");
+    sec.className = "reason-section";
+    sec.innerHTML = `<div class="reason-label">Cluster issues — drives AMBER</div>
+      <ul class="reason-list">${data.cluster_issues.map(x => `<li class="cluster">${escapeHtml(x)}</li>`).join("")}</ul>`;
+    r.appendChild(sec);
+  }
+  if (!any) {
+    r.innerHTML = `<div class="reasons-empty">All clear — no Kuma down, no cluster issues.</div>`;
+  }
+
+  // Brightness — only update slider if user isn't currently dragging it
+  if (data.brightness != null && !suppressNextPoll) {
+    $("brightness-slider").value = data.brightness;
+    $("brightness-value").textContent = data.brightness + "%";
+    lastBrightness = data.brightness;
+  }
+  suppressNextPoll = false;
+
+  // Color preview
+  const scaled = (data.scaled_color || "000000").toUpperCase();
+  const base = (data.color || "000000").toUpperCase();
+  $("scaled-color").textContent = "#" + scaled;
+  $("base-color").textContent = "#" + base;
+  $("scaled-swatch").style.background = "#" + scaled;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+async function poll() {
+  try {
+    const res = await fetch("/api/franklin-lights/state");
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    showError("fetch failed: " + e.message);
+  }
+}
+
+let brightnessTimer = null;
+async function commitBrightness(value) {
+  try {
+    const res = await fetch("/api/franklin-lights/brightness", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({brightness: value}),
+    });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      showError("brightness failed: " + (body.detail || res.statusText));
+      return;
+    }
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    showError("brightness failed: " + e.message);
+  }
+}
+
+const slider = $("brightness-slider");
+slider.addEventListener("input", (e) => {
+  const v = parseInt(e.target.value, 10);
+  $("brightness-value").textContent = v + "%";
+  suppressNextPoll = true;
+  clearTimeout(brightnessTimer);
+  brightnessTimer = setTimeout(() => commitBrightness(v), 120);
+});
+
+document.querySelectorAll(".preset-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const v = parseInt(btn.dataset.value, 10);
+    slider.value = v;
+    $("brightness-value").textContent = v + "%";
+    commitBrightness(v);
+  });
+});
+
+$("force-push-btn").addEventListener("click", async () => {
+  try {
+    const res = await fetch("/api/franklin-lights/push", {method: "POST"});
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    showError("push failed: " + e.message);
+  }
+});
+
+poll();
+setInterval(poll, 3000);
+</script>
+</body>
+</html>
